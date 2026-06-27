@@ -1,0 +1,6 @@
+numpy
+ortools
+gurobipy
+pyscipopt
+Pillow
+matplotlib

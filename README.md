@@ -1,13 +1,6 @@
-# JOLT Deployment Experiments
+# JOLT simulation experiment
 
-This repository contains simulation code for studying joint deployment of LLM services and tool services on mixed G-Type/C-Type server environments.
-
-The experiments compare direct monolithic optimization baselines with JOLT, a two-stage deployment strategy:
-
-1. Assign LLM services to G-Type servers.
-2. Assign tool services to G-Type/C-Type tool hosts.
-
-The code is source-only by design. Generated CSV/JSON/log/figure outputs and local dependency folders should not be committed.
+This repository reproduces the Table III simulation experiments from the paper JOLT: Joint Orchestration of LLMs and Tools for Tool-Intensive Multi-Agent Systems.
 
 ## Requirements
 

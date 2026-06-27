@@ -39,32 +39,6 @@ Solver notes:
 
 For reproducible GitHub usage, avoid committing local dependency folders such as `.gurobi_deps`, `.scip_deps`, `.ortools_deps`, `.venv`, and generated result directories.
 
-## Command-Line Interface
-
-The recommended entry point is:
-
-```bash
-python jolt_cli.py <command> [options]
-```
-
-Available subcommands:
-
-| Command | Purpose |
-| --- | --- |
-| `smoke` | Run a tiny correctness test. |
-| `run` | Run one configurable experiment. |
-| `sweep` | Run multiple LLM scales and checkpoints. |
-| `list-methods` | Print available methods and required solvers. |
-
-JOLT can use either Gurobi or SCIP:
-
-```bash
---jolt-solver gurobi
---jolt-solver scip
-```
-
-Each run writes results into `--out-dir`. The main quality metric is `avg_call_distance`; lower is better.
-
 ## Examples
 
 ### Smoke Example

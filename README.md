@@ -17,11 +17,10 @@ The code is source-only by design. Generated CSV/JSON/log/figure outputs and loc
 | `jolt_cli.py` | GitHub-facing command-line entry point with `smoke`, `run`, `sweep`, and `list-methods` subcommands. |
 | `jolt_single_run_checkpoint_sweep.py` | Checkpoint monitoring and per-method execution logic. |
 | `jolt_small_scale_experiment.py` | Instance generation, objective evaluation, feasibility checks, and solver implementations. |
-| `jolt_hisc_ma_tool_mip_checkpoints.py` | HISC-MA + Tool-MIP checkpoint experiment. |
-| `jolt_algorithm1_convergence_L20.py` | HISC-MA / Algorithm 1 convergence experiment. |
+| `legacy/` | Historical and extended experiment scripts retained for reproducibility. |
 | `requirements.txt` | Python dependency list. |
 
-Other `jolt_*.py` files are historical or extended experiments kept for reproducibility.
+Most users should start with `jolt_cli.py`. The `legacy/` scripts are not needed for the standard smoke tests or packaged reproduction runs.
 
 ## Requirements
 
@@ -110,7 +109,7 @@ python jolt_cli.py <command> [options]
 Available subcommands:
 
 | Command | Purpose |
-| --- | --- | --- |
+| --- | --- |
 | `smoke` | Run a tiny correctness test. |
 | `run` | Run one configurable experiment. |
 | `sweep` | Run multiple LLM scales and checkpoints. |

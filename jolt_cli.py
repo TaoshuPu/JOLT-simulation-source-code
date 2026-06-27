@@ -124,17 +124,12 @@ def print_summary(rows: list[dict]) -> None:
         )
 
 
-def resolve_two_stage_solvers(args: argparse.Namespace) -> tuple[str, str]:
-    gqap_solver = args.gqap_solver
-    tool_mip_solver = args.tool_mip_solver
-    if args.two_stage_solver is not None:
-        gqap_solver = args.two_stage_solver
-        tool_mip_solver = args.two_stage_solver
-    return gqap_solver, tool_mip_solver
+def resolve_jolt_solvers(args: argparse.Namespace) -> tuple[str, str]:
+    return args.jolt_solver, args.jolt_solver
 
 
 def run_experiment(args: argparse.Namespace, llm_values: list[int]) -> None:
-    gqap_solver, tool_mip_solver = resolve_two_stage_solvers(args)
+    gqap_solver, tool_mip_solver = resolve_jolt_solvers(args)
     selected_keys = [normalize_method_key(item) for item in args.methods.split(",") if item.strip()]
     selected = [(key, method_name(key)) for key in selected_keys]
     checkpoints = sorted(c for c in parse_float_list(args.checkpoints_s) if 0 < c <= args.time_limit_s)
@@ -224,9 +219,7 @@ def add_common_run_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--seed-base", type=int, default=20260528)
     parser.add_argument("--capacity-mode", choices=["fixed_per_server", "g_only_fixed_per_server"], default="fixed_per_server")
     parser.add_argument("--methods", default=",".join(key for key, _, _ in METHODS))
-    parser.add_argument("--gqap-solver", choices=["gurobi", "scip"], default="gurobi")
-    parser.add_argument("--tool-mip-solver", choices=["gurobi", "scip"], default="gurobi")
-    parser.add_argument("--two-stage-solver", choices=["gurobi", "scip"], default=None)
+    parser.add_argument("--jolt-solver", choices=["gurobi", "scip"], default="gurobi")
     parser.add_argument("--hard-overhead-s", type=float, default=180.0)
     parser.add_argument("--stable-rel-tol", type=float, default=0.01)
     parser.add_argument("--stable-abs-tol", type=float, default=0.005)
@@ -254,9 +247,7 @@ def main() -> None:
     smoke_parser.add_argument("--seed-base", type=int, default=20260528)
     smoke_parser.add_argument("--capacity-mode", choices=["fixed_per_server", "g_only_fixed_per_server"], default="fixed_per_server")
     smoke_parser.add_argument("--methods", default="jolt")
-    smoke_parser.add_argument("--gqap-solver", choices=["gurobi", "scip"], default="gurobi")
-    smoke_parser.add_argument("--tool-mip-solver", choices=["gurobi", "scip"], default="gurobi")
-    smoke_parser.add_argument("--two-stage-solver", choices=["gurobi", "scip"], default=None)
+    smoke_parser.add_argument("--jolt-solver", choices=["gurobi", "scip"], default="gurobi")
     smoke_parser.add_argument("--hard-overhead-s", type=float, default=30.0)
     smoke_parser.add_argument("--stable-rel-tol", type=float, default=0.01)
     smoke_parser.add_argument("--stable-abs-tol", type=float, default=0.005)

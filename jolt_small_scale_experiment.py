@@ -2809,6 +2809,22 @@ def run_gqap_tool_mip(
     )
 
 
+def run_jolt(
+    inst: Instance,
+    solver: str = "gurobi",
+    timeout_s: float | None = 30.0,
+    seed: int = 0,
+) -> AlgorithmResult:
+    return run_gqap_tool_mip(
+        inst,
+        gqap_solver=solver,
+        tool_mip_solver=solver,
+        phase1_timeout_s=timeout_s,
+        phase2_timeout_s=timeout_s,
+        seed=seed,
+    )
+
+
 def instance_to_jsonable(inst: Instance) -> dict:
     data = asdict(inst)
     for key, value in list(data.items()):

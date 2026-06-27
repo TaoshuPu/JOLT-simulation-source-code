@@ -44,13 +44,13 @@ For reproducible GitHub usage, avoid committing local dependency folders such as
 Run a fast smoke test:
 
 ```bash
-python jolt_cli.py smoke --two-stage-solver scip --restart
+python jolt_cli.py smoke --jolt-solver scip --restart
 ```
 
 PowerShell equivalent:
 
 ```powershell
-python .\jolt_cli.py smoke --two-stage-solver scip --restart
+python .\jolt_cli.py smoke --jolt-solver scip --restart
 ```
 
 Run the default sweep:
@@ -101,7 +101,7 @@ Available subcommands:
 ### Smoke Test
 
 ```bash
-python jolt_cli.py smoke --two-stage-solver scip --restart
+python jolt_cli.py smoke --jolt-solver scip --restart
 ```
 
 Defaults:
@@ -122,8 +122,7 @@ python jolt_cli.py run \
   --time-limit-s 180 \
   --checkpoints-s 180 \
   --methods gurobi,scip,cpsat,jolt \
-  --gqap-solver scip \
-  --tool-mip-solver scip \
+  --jolt-solver scip \
   --out-dir results/l20_3min_scip \
   --restart
 ```
@@ -139,53 +138,47 @@ python jolt_cli.py sweep \
   --time-limit-s 600 \
   --checkpoints-s 60,180,300,420,600 \
   --methods gurobi,scip,cpsat,jolt \
-  --gqap-solver gurobi \
-  --tool-mip-solver gurobi \
+  --jolt-solver gurobi \
   --out-dir results/mixed_gc_20_80 \
   --restart
 ```
 
-### Solver Selection
+### JOLT Solver
 
-JOLT can use Gurobi or SCIP independently in each phase.
+JOLT can use either Gurobi or SCIP.
 
 Options:
 
 | Option | Values | Meaning |
 | --- | --- | --- |
-| `--gqap-solver` | `gurobi`, `scip` | Solver for Phase 1 LLM GQAP. |
-| `--tool-mip-solver` | `gurobi`, `scip` | Solver for Phase 2. |
-| `--two-stage-solver` | `gurobi`, `scip` | Shortcut for setting both phase solvers. |
+| `--jolt-solver` | `gurobi`, `scip` | Solver used by JOLT. |
 
 Behavior:
 
 - If only `--time-limit-s` is provided, use it for each selected method.
-- If `--two-stage-solver scip` is provided, set both `--gqap-solver scip` and `--tool-mip-solver scip`.
 
 Example commands:
 
-Run both phases with SCIP:
+Run JOLT with SCIP:
 
 ```bash
 python jolt_cli.py run \
   --llms 20 \
   --time-limit-s 180 \
   --methods jolt \
-  --gqap-solver scip \
-  --tool-mip-solver scip \
+  --jolt-solver scip \
   --out-dir results/l20_jolt_scip
 ```
 
-Run Phase 1 with Gurobi and Phase 2 with SCIP:
+Run JOLT with Gurobi:
 
 ```bash
 python jolt_cli.py run \
   --llms 20 \
   --time-limit-s 180 \
   --methods jolt \
-  --gqap-solver gurobi \
-  --tool-mip-solver scip \
-  --out-dir results/l20_jolt_gurobi_scip
+  --jolt-solver gurobi \
+  --out-dir results/l20_jolt_gurobi
 ```
 
 Compare direct baselines with SCIP-based two-stage solving:
@@ -195,19 +188,17 @@ python jolt_cli.py run \
   --llms 20 \
   --time-limit-s 180 \
   --methods gurobi,scip,cpsat,jolt \
-  --two-stage-solver scip \
+  --jolt-solver scip \
   --out-dir results/l20_3min_compare
 ```
 
 ## Python API
 
 ```python
-run_gqap_tool_mip(
+run_jolt(
     inst,
-    gqap_solver="gurobi",
-    tool_mip_solver="gurobi",
-    phase1_timeout_s=180.0,
-    phase2_timeout_s=180.0,
+    solver="gurobi",
+    timeout_s=180.0,
 )
 ```
 

@@ -13,14 +13,12 @@ The code is source-only by design. Generated CSV/JSON/log/figure outputs and loc
 
 | File | Purpose |
 | --- | --- |
-| `jolt_packaged_mixed_gc_experiment.py` | Main packaged experiment runner for mixed G/C environments. |
-| `jolt_cli.py` | GitHub-facing command-line entry point with `smoke`, `run`, `sweep`, and `list-methods` subcommands. |
+| `jolt_cli.py` | Command-line entry point with `smoke`, `run`, `sweep`, and `list-methods` subcommands. |
 | `jolt_single_run_checkpoint_sweep.py` | Checkpoint monitoring and per-method execution logic. |
 | `jolt_small_scale_experiment.py` | Instance generation, objective evaluation, feasibility checks, and solver implementations. |
-| `legacy/` | Historical and extended experiment scripts retained for reproducibility. |
 | `requirements.txt` | Python dependency list. |
 
-Most users should start with `jolt_cli.py`. The `legacy/` scripts are not needed for the standard smoke tests or packaged reproduction runs.
+Most users should start with `jolt_cli.py`.
 
 ## Requirements
 
@@ -55,32 +53,17 @@ PowerShell equivalent:
 python .\jolt_cli.py smoke --two-stage-solver scip --restart
 ```
 
-Run the default packaged experiment:
+Run the default sweep:
 
 ```bash
-python jolt_packaged_mixed_gc_experiment.py --restart
-```
-
-The default setting is:
-
-- LLM scales: `20,40,60,80`
-- Tool count: `3 x LLM count`
-- Checkpoints: `60,180,300,420,600` seconds
-- Maximum runtime per algorithm: `600` seconds
-- Capacity mode: `fixed_per_server`
-- Methods: `gurobi,scip,cpsat,jolt`
-
-Equivalent explicit command:
-
-```bash
-python jolt_packaged_mixed_gc_experiment.py \
+python jolt_cli.py sweep \
   --llm-list 20,40,60,80 \
   --tool-ratio 3 \
+  --time-limit-s 600 \
   --checkpoints-s 60,180,300,420,600 \
-  --max-time-s 600 \
   --capacity-mode fixed_per_server \
   --methods gurobi,scip,cpsat,jolt \
-  --out-dir jolt_packaged_mixed_gc_20_80 \
+  --out-dir results/mixed_gc_20_80 \
   --restart
 ```
 
@@ -226,19 +209,6 @@ run_gqap_tool_mip(
     phase1_timeout_s=180.0,
     phase2_timeout_s=180.0,
 )
-```
-
-The legacy packaged runner remains available:
-
-```bash
-python jolt_packaged_mixed_gc_experiment.py \
-  --llm-list 5 \
-  --checkpoints-s 2,4 \
-  --max-time-s 4 \
-  --methods jolt \
-  --two-stage-solver scip \
-  --out-dir results/packaged_smoke_scip \
-  --restart
 ```
 
 ## Example Result

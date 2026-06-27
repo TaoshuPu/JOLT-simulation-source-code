@@ -25,10 +25,6 @@ METHOD_ALIASES = {
     "jolt": "gqap_tool_mip",
 }
 
-METHOD_CLI_NAMES = {
-    "gqap_tool_mip": "jolt",
-}
-
 
 def parse_int_list(text: str) -> list[int]:
     return [int(item.strip()) for item in text.split(",") if item.strip()]
@@ -218,7 +214,7 @@ def add_common_run_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--checkpoints-s", default="60,180,300,420,600")
     parser.add_argument("--seed-base", type=int, default=20260528)
     parser.add_argument("--capacity-mode", choices=["fixed_per_server", "g_only_fixed_per_server"], default="fixed_per_server")
-    parser.add_argument("--methods", default=",".join(key for key, _, _ in METHODS))
+    parser.add_argument("--methods", default="gurobi,scip,cpsat,jolt")
     parser.add_argument("--jolt-solver", choices=["gurobi", "scip"], default="gurobi")
     parser.add_argument("--hard-overhead-s", type=float, default=180.0)
     parser.add_argument("--stable-rel-tol", type=float, default=0.01)
@@ -228,33 +224,9 @@ def add_common_run_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--out-dir", type=Path, required=True)
 
 
-def list_methods(_: argparse.Namespace) -> None:
-    for key, name, requirements in METHODS:
-        cli_key = METHOD_CLI_NAMES.get(key, key)
-        alias_text = f" (alias: {key})" if cli_key != key else ""
-        print(f"{cli_key:<14} {name:<28} requires: {requirements}{alias_text}")
-
-
 def main() -> None:
     parser = argparse.ArgumentParser(description="Command-line runner for JOLT deployment experiments.")
     subparsers = parser.add_subparsers(dest="command", required=True)
-
-    smoke_parser = subparsers.add_parser("smoke", help="Run a tiny JOLT correctness test.")
-    smoke_parser.add_argument("--llms", type=int, default=5)
-    smoke_parser.add_argument("--tool-ratio", type=int, default=3)
-    smoke_parser.add_argument("--time-limit-s", type=float, default=4.0)
-    smoke_parser.add_argument("--checkpoints-s", default="2,4")
-    smoke_parser.add_argument("--seed-base", type=int, default=20260528)
-    smoke_parser.add_argument("--capacity-mode", choices=["fixed_per_server", "g_only_fixed_per_server"], default="fixed_per_server")
-    smoke_parser.add_argument("--methods", default="jolt")
-    smoke_parser.add_argument("--jolt-solver", choices=["gurobi", "scip"], default="gurobi")
-    smoke_parser.add_argument("--hard-overhead-s", type=float, default=30.0)
-    smoke_parser.add_argument("--stable-rel-tol", type=float, default=0.01)
-    smoke_parser.add_argument("--stable-abs-tol", type=float, default=0.005)
-    smoke_parser.add_argument("--skip-after-two-nan", action="store_true")
-    smoke_parser.add_argument("--restart", action="store_true", default=True)
-    smoke_parser.add_argument("--out-dir", type=Path, default=Path("results/smoke"))
-    smoke_parser.set_defaults(func=lambda args: run_experiment(args, [args.llms]))
 
     run_parser = subparsers.add_parser("run", help="Run one LLM scale.")
     run_parser.add_argument("--llms", type=int, required=True)
@@ -265,9 +237,6 @@ def main() -> None:
     sweep_parser.add_argument("--llm-list", default="20,40,60,80")
     add_common_run_args(sweep_parser)
     sweep_parser.set_defaults(func=lambda args: run_experiment(args, parse_int_list(args.llm_list)))
-
-    list_parser = subparsers.add_parser("list-methods", help="Print available methods and solver requirements.")
-    list_parser.set_defaults(func=list_methods)
 
     args = parser.parse_args()
     args.func(args)

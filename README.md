@@ -19,7 +19,6 @@ Solver notes:
 - Gurobi-based methods require `gurobipy` and a valid Gurobi license.
 - SCIP-based methods require `pyscipopt`.
 - CP-SAT baselines require `ortools`.
-- Plotting utilities require `Pillow` and `matplotlib`.
 
 For reproducible GitHub usage, avoid committing local dependency folders such as `.gurobi_deps`, `.scip_deps`, `.ortools_deps`, `.venv`, and generated result directories.
 

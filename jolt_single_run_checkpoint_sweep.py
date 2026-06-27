@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import argparse
 import csv
 import json
 import math
@@ -13,13 +12,9 @@ from jolt_small_scale_experiment import (
     AlgorithmResult,
     average_call_distance,
     cpsat_original_solver,
-    greedy_original_warm_start,
     gurobi_gqap_llm_deployment,
     gurobi_original_solver,
     gurobi_tool_deployment,
-    hisc_ma_iwc_gs_solver,
-    instance_to_jsonable,
-    is_deployment_feasible,
     iwc_gs_tool_deployment,
     make_instance,
     random_llm_assignment,
@@ -35,7 +30,6 @@ METHODS = [
     ("scip", "SCIP MIQP original"),
     ("cpsat", "OR-Tools CP-SAT original"),
     ("gqap_tool_mip", "JOLT"),
-    ("hisc_iwc_gs", "HISC-MA + IWC-GS"),
 ]
 
 METHOD_ALIASES = {
@@ -97,20 +91,6 @@ def static_actual_parameters(method_key: str, llms: int, tools: int, g_count: in
             f"phase1_q_terms={llms * llms * g_count * max(0, g_count - 1)};"
             f"phase2_y={tools * h_count};phase2_terms={tools * h_count}"
         )
-    if method_key == "hisc_iwc_gs":
-        if llms <= 20:
-            pop, gen, restarts = 96, 180, 6
-        elif llms <= 40:
-            pop, gen, restarts = 96, 180, 5
-        elif llms <= 60:
-            pop, gen, restarts = 96, 180, 3
-        else:
-            pop, gen, restarts = 64, 140, 4
-        return (
-            f"phase1_x={llms * g_count};"
-            f"phase1_q_terms={llms * llms * g_count * max(0, g_count - 1)};"
-            f"pop={pop};gen={gen};restarts={restarts};phase2=iwc_gs"
-        )
     return "NA"
 
 
@@ -133,7 +113,7 @@ def two_stage_actual_parameters(
 
 def decision_parameters(method_key: str, llms: int, tools: int) -> int:
     method_key = normalize_method_key(method_key)
-    return llms if method_key in {"gqap_tool_mip", "hisc_iwc_gs"} else llms + tools
+    return llms if method_key == "gqap_tool_mip" else llms + tools
 
 
 def solver_status(result: AlgorithmResult) -> str:
@@ -263,13 +243,6 @@ def run_worker(
                     "result": phase1_extra,
                 }
             )
-            return
-
-        if method_key == "hisc_iwc_gs":
-            result = hisc_ma_iwc_gs_solver(inst, seed + 10_000, phase1_timeout_s=max_time_s, progress_callback=progress)
-            if result.feasible:
-                progress(result.solve_time_s, result.assignment[:llms], result.assignment[llms:], result.avg_call_distance, {"source": "final"})
-            queue.put({"type": "done", "elapsed_s": time.perf_counter() - start, "status": solver_status(result), "result": result.extra})
             return
 
         raise ValueError(f"Unknown method: {method_key}")
@@ -586,108 +559,3 @@ def write_rows(path: Path, rows: list[dict]) -> None:
         writer.writeheader()
         writer.writerows(rows)
 
-
-def combo_complete(rows: list[dict], llms: int, method_name: str, checkpoints: list[float]) -> bool:
-    seen = {
-        float(row["checkpoint_s"])
-        for row in rows
-        if int(row["llms"]) == llms and row["method"] == method_name
-    }
-    return all(any(abs(item - checkpoint) < 1e-9 for item in seen) for checkpoint in checkpoints)
-
-
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Single-run checkpoint sweep for JOLT deployment algorithms.")
-    parser.add_argument("--llm-list", default="20,40,60,80")
-    parser.add_argument("--tool-ratio", type=int, default=3)
-    parser.add_argument("--checkpoints-s", default="60,180,300,420,600")
-    parser.add_argument("--max-time-s", type=float, default=600.0)
-    parser.add_argument("--seed-base", type=int, default=20260528)
-    parser.add_argument("--capacity-mode", choices=["fixed_per_server", "g_only_fixed_per_server"], default="fixed_per_server")
-    parser.add_argument("--methods", default=",".join(key for key, _ in METHODS))
-    parser.add_argument("--hard-overhead-s", type=float, default=120.0)
-    parser.add_argument("--stable-rel-tol", type=float, default=0.01)
-    parser.add_argument("--stable-abs-tol", type=float, default=0.005)
-    parser.add_argument("--skip-after-two-nan", action="store_true")
-    parser.add_argument("--out-dir", type=Path, default=Path("jolt_single_run_checkpoint_20_80_10min"))
-    args = parser.parse_args()
-
-    selected_keys = {normalize_method_key(x) for x in args.methods.split(",") if x.strip()}
-    selected = [m for m in METHODS if m[0] in selected_keys]
-    llm_values = [int(x.strip()) for x in args.llm_list.split(",") if x.strip()]
-    checkpoints = [float(x.strip()) for x in args.checkpoints_s.split(",") if x.strip()]
-    checkpoints = sorted(c for c in checkpoints if 0 < c <= args.max_time_s)
-
-    args.out_dir.mkdir(parents=True, exist_ok=True)
-    summary_path = args.out_dir / "summary.csv"
-    all_rows: list[dict] = []
-    if summary_path.exists():
-        with summary_path.open("r", newline="", encoding="utf-8") as f:
-            all_rows = list(csv.DictReader(f))
-
-    for llms in llm_values:
-        tools = llms * args.tool_ratio
-        seed = args.seed_base + llms * 1000
-        inst = make_instance(
-            seed,
-            llm_count=llms,
-            tool_count=tools,
-            g_count=None,
-            c_count=None,
-            capacity_mode=args.capacity_mode,
-        )
-        with (args.out_dir / f"instance_L{llms}.json").open("w", encoding="utf-8") as f:
-            json.dump(instance_to_jsonable(inst), f, ensure_ascii=False)
-        print(
-            f"\nScale L={llms}, T={tools}, G={inst.g_count}, C={inst.c_count}, H={tool_host_count(inst)}",
-            flush=True,
-        )
-
-        for method_key, method_name in selected:
-            if combo_complete(all_rows, llms, method_name, checkpoints):
-                print(f"  skip {method_name} (existing complete)", flush=True)
-                continue
-            print(f"  running {method_name} as one {checkpoint_label(args.max_time_s)} trajectory ...", flush=True)
-            rows, snapshots, done, error, stopped = run_monitored_method(
-                method_key=method_key,
-                seed=seed,
-                llms=llms,
-                tools=tools,
-                checkpoints=checkpoints,
-                max_time_s=args.max_time_s,
-                capacity_mode=args.capacity_mode,
-                hard_overhead_s=args.hard_overhead_s,
-                rel_tol=args.stable_rel_tol,
-                abs_tol=args.stable_abs_tol,
-                skip_after_two_nan=args.skip_after_two_nan,
-            )
-            all_rows = [
-                row
-                for row in all_rows
-                if not (int(row["llms"]) == llms and row["method"] == method_name)
-            ]
-            all_rows.extend(rows)
-            write_rows(summary_path, all_rows)
-            trace_path = args.out_dir / f"trace_L{llms}_{method_key}.json"
-            trace_path.write_text(
-                json.dumps(
-                    {
-                        "snapshots": snapshots,
-                        "done": done,
-                        "error": error,
-                        "stopped": stopped,
-                    },
-                    ensure_ascii=False,
-                ),
-                encoding="utf-8",
-            )
-            best_values = [finite(r["avg_call_distance"]) for r in rows]
-            best_text = ", ".join("NaN" if v is None else f"{v:.6f}" for v in best_values)
-            terminal = (done or stopped or error or {}).get("status", "")
-            print(f"    checkpoints: {best_text}; terminal={terminal}", flush=True)
-
-    print(f"\nWrote {summary_path.resolve()}", flush=True)
-
-
-if __name__ == "__main__":
-    main()

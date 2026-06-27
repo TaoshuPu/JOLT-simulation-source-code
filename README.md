@@ -41,6 +41,8 @@ For reproducible GitHub usage, avoid committing local dependency folders such as
 
 ## Examples
 
+JOLT can be solved with either Gurobi or SCIP via `--jolt-solver`.
+
 ### Smoke Example
 
 This smoke example uses `LLM=20`, `Tools=60`, and a 3-minute limit per selected method. It compares Gurobi, SCIP, CP-SAT, and JOLT, so the expected wall-clock time is about 12-15 minutes on a typical workstation.

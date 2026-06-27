@@ -2,6 +2,8 @@
 
 This repository reproduces the Table III simulation experiments from the paper JOLT: Joint Orchestration of LLMs and Tools for Tool-Intensive Multi-Agent Systems.
 
+![Table III: Average tool-call network distance under different time budgets.](assets/table3.png)
+
 ## Requirements
 
 Use Python 3.11+.

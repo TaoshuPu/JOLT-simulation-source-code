@@ -29,3 +29,6 @@ jolt_*_600s*/
 *.png
 *.pdf
 *.svg
+
+!assets/
+!assets/table3.png

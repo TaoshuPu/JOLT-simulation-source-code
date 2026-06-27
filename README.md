@@ -9,17 +9,6 @@ The experiments compare direct monolithic optimization baselines with JOLT, a tw
 
 The code is source-only by design. Generated CSV/JSON/log/figure outputs and local dependency folders should not be committed.
 
-## Repository Layout
-
-| File | Purpose |
-| --- | --- |
-| `jolt_cli.py` | Command-line entry point with `smoke`, `run`, `sweep`, and `list-methods` subcommands. |
-| `jolt_single_run_checkpoint_sweep.py` | Checkpoint monitoring and per-method execution logic. |
-| `jolt_small_scale_experiment.py` | Instance generation, objective evaluation, feasibility checks, and solver implementations. |
-| `requirements.txt` | Python dependency list. |
-
-Most users should start with `jolt_cli.py`.
-
 ## Requirements
 
 Use Python 3.11+.

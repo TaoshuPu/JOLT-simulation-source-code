@@ -39,48 +39,6 @@ Solver notes:
 
 For reproducible GitHub usage, avoid committing local dependency folders such as `.gurobi_deps`, `.scip_deps`, `.ortools_deps`, `.venv`, and generated result directories.
 
-## Quick Start
-
-Run a fast smoke test:
-
-```bash
-python jolt_cli.py smoke --jolt-solver scip --restart
-```
-
-PowerShell equivalent:
-
-```powershell
-python .\jolt_cli.py smoke --jolt-solver scip --restart
-```
-
-Run the default sweep:
-
-```bash
-python jolt_cli.py sweep \
-  --llm-list 20,40,60,80 \
-  --tool-ratio 3 \
-  --time-limit-s 600 \
-  --checkpoints-s 60,180,300,420,600 \
-  --capacity-mode fixed_per_server \
-  --methods gurobi,scip,cpsat,jolt \
-  --out-dir results/mixed_gc_20_80 \
-  --restart
-```
-
-## Output Files
-
-Each run writes results into `--out-dir`.
-
-| File | Meaning |
-| --- | --- |
-| `summary_long.csv` | Long-form records for each LLM scale, method, and checkpoint. |
-| `avg_call_distance_wide.csv` | Pivot table of average call distance by method. |
-| `status_wide.csv` | Pivot table of solver status by method. |
-| `trace_L*_*.json` | Per-method checkpoint trace and terminal metadata. |
-| `instance_L*.json` | Generated instance metadata. |
-
-The main quality metric is `avg_call_distance`; lower is better.
-
 ## Command-Line Interface
 
 The recommended entry point is:
@@ -98,22 +56,20 @@ Available subcommands:
 | `sweep` | Run multiple LLM scales and checkpoints. |
 | `list-methods` | Print available methods and required solvers. |
 
-### Smoke Test
+JOLT can use either Gurobi or SCIP:
 
 ```bash
-python jolt_cli.py smoke --jolt-solver scip --restart
+--jolt-solver gurobi
+--jolt-solver scip
 ```
 
-Defaults:
+Each run writes results into `--out-dir`. The main quality metric is `avg_call_distance`; lower is better.
 
-- `--llms 5`
-- `--tool-ratio 3`
-- `--time-limit-s 4`
-- `--checkpoints-s 2,4`
-- `--methods jolt`
-- `--out-dir results/smoke`
+## Examples
 
-### Single Experiment
+### Smoke Example
+
+This smoke example uses `LLM=20`, `Tools=60`, and a 3-minute limit per selected method. It compares Gurobi, SCIP, CP-SAT, and JOLT, so the expected wall-clock time is about 12-15 minutes on a typical workstation.
 
 ```bash
 python jolt_cli.py run \
@@ -129,7 +85,9 @@ python jolt_cli.py run \
 
 This should generate one instance with `20` LLM services and `60` tool services, then compare the selected methods.
 
-### Scale Sweep
+### Full Example
+
+This full example runs the packaged scale sweep for `LLM=20,40,60,80` with 10-minute limits and five checkpoints.
 
 ```bash
 python jolt_cli.py sweep \
@@ -141,53 +99,4 @@ python jolt_cli.py sweep \
   --jolt-solver gurobi \
   --out-dir results/mixed_gc_20_80 \
   --restart
-```
-
-### JOLT Solver
-
-JOLT can use either Gurobi or SCIP.
-
-Options:
-
-| Option | Values | Meaning |
-| --- | --- | --- |
-| `--jolt-solver` | `gurobi`, `scip` | Solver used by JOLT. |
-
-Behavior:
-
-- If only `--time-limit-s` is provided, use it for each selected method.
-
-Example commands:
-
-Run JOLT with SCIP:
-
-```bash
-python jolt_cli.py run \
-  --llms 20 \
-  --time-limit-s 180 \
-  --methods jolt \
-  --jolt-solver scip \
-  --out-dir results/l20_jolt_scip
-```
-
-Run JOLT with Gurobi:
-
-```bash
-python jolt_cli.py run \
-  --llms 20 \
-  --time-limit-s 180 \
-  --methods jolt \
-  --jolt-solver gurobi \
-  --out-dir results/l20_jolt_gurobi
-```
-
-Compare direct baselines with SCIP-based two-stage solving:
-
-```bash
-python jolt_cli.py run \
-  --llms 20 \
-  --time-limit-s 180 \
-  --methods gurobi,scip,cpsat,jolt \
-  --jolt-solver scip \
-  --out-dir results/l20_3min_compare
 ```
